@@ -241,8 +241,9 @@ module VagrantPlugins
       end
 
       def sudo(command, opts=nil, &block)
+        use_sudo  = ( @machine.ssh_info[:username].to_s != "root" )
         # Run `execute` but with the `sudo` option.
-        opts = { sudo: true }.merge(opts || {})
+        opts = { sudo: use_sudo }.merge(opts || {})
         execute(command, opts, &block)
       end
 
@@ -324,7 +325,7 @@ module VagrantPlugins
 
         # Build the options we'll use to initiate the connection via Net::SSH
         common_connect_opts = {
-          auth_methods:          ["none", "publickey", "hostbased", "password"],
+          auth_methods:          ["none", "publickey", "hostbased", "password","keyboard-interactive"],
           config:                false,
           forward_agent:         ssh_info[:forward_agent],
           keys:                  ssh_info[:private_key_path],
@@ -441,7 +442,7 @@ module VagrantPlugins
           shell: nil
         }.merge(opts)
 
-        sudo  = opts[:sudo]
+        sudo  = ( opts[:sudo] && @machine.ssh_info[:username].to_s != "root" )
         shell = opts[:shell]
 
         @logger.info("Execute: #{command} (sudo=#{sudo.inspect})")
